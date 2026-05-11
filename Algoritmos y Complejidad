@@ -1,0 +1,138 @@
+import math
+
+# ==========================================
+# Funciones Auxiliares
+# ==========================================
+def chop_sig(x, sig=3):
+    """Trunca (corta) un número a 'sig' cifras significativas."""
+    if x == 0:
+        return 0.0
+    sign = 1 if x > 0 else -1
+    x = abs(x)
+    exponent = math.floor(math.log10(x))
+    factor = 10**(sig - 1 - exponent)
+    # math.floor asegura que se trunque (corte) hacia abajo
+    chopped = math.floor(x * factor) / factor
+    return sign * chopped
+
+print("="*60)
+print("EJERCICIO 1: Aritmética de corte de 3 dígitos")
+print("="*60)
+
+# 1.a: Suma de 1/i^2 (Adelante y Atrás)
+sum_1a_fwd = 0.0
+for i in range(1, 11):
+    term = chop_sig(1 / (i**2))
+    sum_1a_fwd = chop_sig(sum_1a_fwd + term)
+
+sum_1a_rev = 0.0
+for i in range(10, 0, -1):
+    term = chop_sig(1 / (i**2))
+    sum_1a_rev = chop_sig(sum_1a_rev + term)
+
+# 1.b: Suma de 1/i^3 (Adelante y Atrás)
+sum_1b_fwd = 0.0
+for i in range(1, 11):
+    term = chop_sig(1 / (i**3))
+    sum_1b_fwd = chop_sig(sum_1b_fwd + term)
+
+sum_1b_rev = 0.0
+for i in range(10, 0, -1):
+    term = chop_sig(1 / (i**3))
+    sum_1b_rev = chop_sig(sum_1b_rev + term)
+
+exact_1a = sum(1/(i**2) for i in range(1, 11))
+exact_1b = sum(1/(i**3) for i in range(1, 11))
+
+print(f"1.a (1/i^2) Exacto     = {exact_1a:.6f}")
+print(f"1.a Adelante (1 -> 10) = {sum_1a_fwd}")
+print(f"1.a Atrás   (10 -> 1)  = {sum_1a_rev}")
+print(f"1.b (1/i^3) Exacto     = {exact_1b:.6f}")
+print(f"1.b Adelante (1 -> 10) = {sum_1b_fwd}")
+print(f"1.b Atrás   (10 -> 1)  = {sum_1b_rev}")
+print("\nCONCLUSIÓN 1:")
+print("Sumar en orden inverso (del término más pequeño al más grande) es MÁS PRECISO.")
+print("Al sumar números pequeños primero, estos se acumulan y afectan los dígitos")
+print("menos significativos antes de ser sumados a números grandes. Si sumamos ")
+print("los grandes primero, los números pequeños son truncados y se pierde información.")
+
+
+print("\n" + "="*60)
+print("EJERCICIO 2 y 3: Serie de Maclaurin para arcotangente")
+print("="*60)
+
+# 2.a: Términos para |4*Pn(1) - pi| < 10^-3
+# El error de una serie alternante es menor o igual al valor absoluto del primer término despreciado
+# Error <= 4 * (1 / (2n + 1)) < 10^-3  => 2n + 1 > 4000 => n >= 2000
+n_2a = 2000
+print(f"2.a: Para garantizar error < 10^-3 en 4*arctan(1), n debe ser >= {n_2a}")
+
+# 2.b: Términos para error < 10^-10
+# 4 * (1 / (2n + 1)) < 10^-10 => 2n + 1 > 40000000000 => n = 20000000000
+n_2b = 20_000_000_000
+print(f"2.b: Para error < 10^-10, n debe ser >= {n_2b} (inviable computacionalmente en C++)")
+
+# 3: Aproximación de pi = 16 arctan(1/5) - 4 arctan(1/239)
+def arctan_term(x, n):
+    return ((-1)**(n+1)) * (x**(2*n - 1)) / (2*n - 1)
+
+n_3 = 1
+aprox_pi = 0
+while True:
+    term_5 = 16 * arctan_term(1/5, n_3)
+    term_239 = 4 * arctan_term(1/239, n_3)
+    aprox_pi += (term_5 - term_239)
+    if abs(aprox_pi - math.pi) < 1e-3:
+        break
+    n_3 += 1
+print(f"3: Utilizando la fórmula mejorada, se requieren solo n = {n_3} términos para error < 10^-3")
+
+
+print("\n" + "="*60)
+print("EJERCICIO 4 y 5: Algoritmos y Complejidad")
+print("="*60)
+print("EJERCICIO 4:")
+print(" - Algoritmo (a): INCORRECTO. Inicializa PRODUCT=0, por lo que el resultado siempre será 0.")
+print(" - Algoritmo (b): CORRECTO. Es el método tradicional de productoria.")
+print(" - Algoritmo (c): CORRECTO y OPTIMIZADO. Incluye una condición de salida temprana si")
+print("                  encuentra un 0, ahorrando ciclos de CPU.")
+
+print("\nEJERCICIO 5:")
+print("5.a: Suma = Sum_i(Sum_j(ai * bj)). Requiere n(n+1)/2 multiplicaciones y n(n+1)/2 - 1 sumas.")
+print("5.b: Optimización: Factorizando 'ai', queda Sum_i( ai * Sum_j(bj) ).")
+print("     Manteniendo una suma acumulada de 'b', esto se reduce drásticamente a:")
+print("     n multiplicaciones y (2n - 1) sumas.")
+
+
+print("\n" + "="*60)
+print("DISCUSIONES 1, 2 y 3")
+print("="*60)
+
+print("DISCUSIÓN 1: Algoritmo Inverso")
+print("Para sumar i=1 hasta n de x_i en reversa:")
+print("  SUM = 0\n  Para i = n hasta 1 paso -1 haga\n    SUM = SUM + x_i\n  Retornar SUM")
+
+print("\nDISCUSIÓN 2: Raíces de la Cuadrática sin pérdida de significancia")
+print("Para evitar el error de cancelación al restar números cercanos (b y sqrt(b^2-4ac)):")
+print("  q = -0.5 * (b + sign(b) * sqrt(b^2 - 4ac))")
+print("  x1 = q / a")
+print("  x2 = c / q")
+
+print("\nDISCUSIÓN 3: Iteración de Identidad")
+x = 0.25
+right_side = (1 + 2*x) / (1 + x + x**2)
+
+n_disc = 0
+left_side = 0.0
+
+while True:
+    num = (2**n_disc) * (x**(2**n_disc - 1)) - (2**(n_disc + 1)) * (x**(2**(n_disc + 1) - 1))
+    den = 1 - x**(2**n_disc) + x**(2**(n_disc + 1))
+    left_side += num / den
+    
+    if abs(left_side - right_side) < 1e-6:
+        break
+    n_disc += 1
+
+print(f"Para x = {x}, la diferencia es menor a 10^-6 con un total de n = {n_disc + 1} términos ")
+print(f"Valor convergido: {left_side:.7f} vs Exacto: {right_side:.7f}")
