@@ -1,0 +1,150 @@
+# metodos_numericos
+import math
+
+# ==========================================
+# Funciones Auxiliares
+# ==========================================
+def error_absoluto(p, p_star):
+    return abs(p - p_star)
+
+def error_relativo(p, p_star):
+    if p == 0:
+        return float('inf')
+    return abs(p - p_star) / abs(p)
+
+def round_sig(x, sig=3):
+    """Redondea un número a 'sig' cifras significativas."""
+    if x == 0:
+        return 0.0
+    return round(x, sig - int(math.floor(math.log10(abs(x)))) - 1)
+
+def mostrar_errores(etiqueta, p, p_star):
+    ea = error_absoluto(p, p_star)
+    er = error_relativo(p, p_star)
+    print(f"{etiqueta}:")
+    print(f"  Valor exacto p = {p:.8g}")
+    print(f"  Valor aprox p* = {p_star:.8g}")
+    print(f"  Error Absoluto = {ea:.6e}")
+    print(f"  Error Relativo = {er:.6e}\n")
+
+print("="*50)
+print("EJERCICIO 1: Errores absoluto y relativo")
+print("="*50)
+mostrar_errores("1.a", math.pi, 22/7)
+mostrar_errores("1.b", math.pi, 3.1416)
+mostrar_errores("1.c", math.e, 2.718)
+mostrar_errores("1.d", math.sqrt(2), 1.414)
+
+print("="*50)
+print("EJERCICIO 2: Errores absoluto y relativo")
+print("="*50)
+mostrar_errores("2.a", math.exp(10), 22000)
+mostrar_errores("2.b", 10**math.pi, 1400)
+mostrar_errores("2.c", math.factorial(8), 39900)
+# p* para 2.d: sqrt(18*pi) * (9/e)^9
+p_star_2d = math.sqrt(18 * math.pi) * (9 / math.e)**9
+mostrar_errores("2.d", math.factorial(9), p_star_2d)
+
+print("="*50)
+print("EJERCICIO 3: Intervalos para error relativo <= 10^-4")
+print("="*50)
+def calcular_intervalo(p):
+    tolerancia = p * 1e-4
+    return (p - tolerancia, p + tolerancia)
+
+valores_p3 = {
+    "3.a (\u03c0)": math.pi,
+    "3.b (e)": math.e,
+    "3.c (\u221a2)": math.sqrt(2),
+    "3.d (\u221a7)": math.sqrt(7) # Interpretado de raíz cuadrada de 7
+}
+
+for clave, p in valores_p3.items():
+    intervalo = calcular_intervalo(p)
+    print(f"{clave}: Intervalo para p* = [{intervalo[0]:.6f}, {intervalo[1]:.6f}]")
+print("\n")
+
+print("="*50)
+print("EJERCICIO 4: Aritmética de redondeo de 3 dígitos")
+print("="*50)
+# Para estos cálculos, simulamos la aritmética paso a paso
+# Expresión 2: (2/9) * (9/11)
+exact_4_2 = (2/9) * (9/11)
+aprox_4_2 = round_sig(round_sig(2/9) * round_sig(9/11))
+
+# Expresión 3: -10*pi + 6*e - 3/61
+exact_4_3 = -10*math.pi + 6*math.e - 3/61
+t1 = round_sig(-10 * round_sig(math.pi))
+t2 = round_sig(6 * round_sig(math.e))
+t3 = round_sig(3 / 61)
+aprox_4_3 = round_sig(round_sig(t1 + t2) - t3)
+
+# Expresión 4: (sqrt(13) + sqrt(11)) / (sqrt(13) - sqrt(11))
+exact_4_4 = (math.sqrt(13) + math.sqrt(11)) / (math.sqrt(13) - math.sqrt(11))
+r13 = round_sig(math.sqrt(13))
+r11 = round_sig(math.sqrt(11))
+num = round_sig(r13 + r11)
+den = round_sig(r13 - r11)
+aprox_4_4 = round_sig(num / den)
+
+mostrar_errores("4.2: (2/9)*(9/11)", exact_4_2, aprox_4_2)
+mostrar_errores("4.3: -10\u03c0 + 6e - 3/61", exact_4_3, aprox_4_3)
+mostrar_errores("4.4: (\u221a13 + \u221a11) / (\u221a13 - \u221a11)", exact_4_4, aprox_4_4)
+
+print("="*50)
+print("EJERCICIO 5: Serie de Maclaurin para arcotangente")
+print("="*50)
+def arctan_aprox(x):
+    """P(x) = x - (1/3)x^3 + (1/5)x^5"""
+    return x - (1/3)*(x**3) + (1/5)*(x**5)
+
+exact_pi = math.pi
+# 5.a: 4[arctan(1/2) + arctan(1/3)]
+aprox_pi_a = 4 * (arctan_aprox(1/2) + arctan_aprox(1/3))
+mostrar_errores("5.a", exact_pi, aprox_pi_a)
+
+# 5.b: 16 arctan(1/5) - 4 arctan(1/239)
+aprox_pi_b = 16 * arctan_aprox(1/5) - 4 * arctan_aprox(1/239)
+mostrar_errores("5.b", exact_pi, aprox_pi_b)
+
+print("="*50)
+print("EJERCICIO 6: Aproximación de e mediante series")
+print("="*50)
+def e_aprox(n_terms):
+    return sum(1/math.factorial(n) for n in range(n_terms + 1))
+
+exact_e = math.e
+mostrar_errores("6.a (n=5)", exact_e, e_aprox(5))
+mostrar_errores("6.b (n=10)", exact_e, e_aprox(10))
+
+print("="*50)
+print("EJERCICIO 7: Fórmulas de intersección (Aritmética de 3 dígitos)")
+print("="*50)
+x0, y0 = 1.31, 3.24
+x1, y1 = 1.93, 5.76
+
+# Cálculo del valor exacto
+x_exact = (x0*y1 - x1*y0) / (y1 - y0)
+
+# Fórmula 1 con redondeo a 3 cifras: x = (x0*y1 - x1*y0) / (y1 - y0)
+x0y1 = round_sig(x0 * y1)
+x1y0 = round_sig(x1 * y0)
+num_f1 = round_sig(x0y1 - x1y0)
+den_f1 = round_sig(y1 - y0)
+x_f1 = round_sig(num_f1 / den_f1)
+
+# Fórmula 2 con redondeo a 3 cifras: x = x0 - (x1 - x0)*y0 / (y1 - y0)
+x1_x0 = round_sig(x1 - x0)
+term_num = round_sig(x1_x0 * y0)
+den_f2 = round_sig(y1 - y0)
+frac = round_sig(term_num / den_f2)
+x_f2 = round_sig(x0 - frac)
+
+mostrar_errores("Fórmula 1 (Tradicional)", x_exact, x_f1)
+mostrar_errores("Fórmula 2 (Modificada)", x_exact, x_f2)
+
+print("CONCLUSIÓN EJERCICIO 7:")
+print("El método de la Fórmula 2 es mejor. La Fórmula 1 involucra la resta de dos ")
+print("números muy cercanos en el numerador (7.55 - 6.25), lo que provoca un error de ")
+print("cancelación catastrófica al reducir drásticamente las cifras significativas.")
+print("La Fórmula 2 reorganiza la ecuación matemáticamente para evitar esta pérdida.")
