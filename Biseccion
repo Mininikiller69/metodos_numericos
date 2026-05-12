@@ -1,0 +1,93 @@
+import numpy as np
+import math
+
+def biseccion(f, a, b, tol, max_iter=100, name=""):
+    """
+    Implementación del método de bisección.
+    """
+    if f(a) * f(b) >= 0:
+        print(f"[{name}] El intervalo [{a}, {b}] no cambia de signo o es inválido.")
+        return None
+
+    print(f"\n--- Resolviendo: {name} en intervalo [{a}, {b}] con tolerancia {tol} ---")
+    
+    n = 1
+    while n <= max_iter:
+        p = a + (b - a) / 2.0
+        if np.abs(f(p)) < 1e-15 or (b - a) / 2.0 < tol:
+            print(f"  Raíz encontrada: p = {p:.5f} en {n} iteraciones.")
+            return p
+        
+        if f(a) * f(p) > 0:
+            a = p
+        else:
+            b = p
+        n += 1
+
+    print("  El método fracasó después de", max_iter, "iteraciones.")
+    return None
+
+# ==========================================
+# CONJUNTO DE EJERCICIOS
+# ==========================================
+
+# Ejercicio 1: x^3 - 7x^2 + 14x - 6 = 0
+f1 = lambda x: x**3 - 7*x**2 + 14*x - 6
+biseccion(f1, 0, 1, 1e-2, name="Ej 1a: Polinomio")
+biseccion(f1, 1, 3.2, 1e-2, name="Ej 1b: Polinomio")
+biseccion(f1, 3.2, 4, 1e-2, name="Ej 1c: Polinomio")
+
+# Ejercicio 2b: x = 2*sin(x) -> x - 2*sin(x) = 0
+# Buscamos el primer valor positivo, un buen intervalo visual es [1, 2]
+f2 = lambda x: x - 2 * np.sin(x)
+biseccion(f2, 1, 2, 1e-5, name="Ej 2b: x = 2*sin(x)")
+
+# Ejercicio 3b: x = tan(x) -> x - tan(x) = 0
+# El primer valor positivo está un poco antes de 3*pi/2 (aprox 4.49)
+f3 = lambda x: x - np.tan(x)
+biseccion(f3, 4, 4.6, 1e-5, name="Ej 3b: x = tan(x)")
+
+# Ejercicio 4b: x^2 - 1 = e^(1-x^2) -> x^2 - 1 - e^(1-x^2) = 0 en [-2, 0]
+f4 = lambda x: x**2 - 1 - np.exp(1 - x**2)
+biseccion(f4, -2, 0, 1e-3, name="Ej 4b: x^2 - 1 = e^(1-x^2)")
+
+# ==========================================
+# EJERCICIOS APLICADOS
+# ==========================================
+
+# Aplicado 1: Abrevadero
+# V = L * [0.5*pi*r^2 - r^2*arcsin(h/r) - h*(r^2 - h^2)^(1/2)]
+# Datos: L = 10, r = 1, V = 12.4
+L = 10.0
+r = 1.0
+V_obj = 12.4
+
+def f_volumen(h):
+    # Ecuación a igualar a cero: V(h) - 12.4 = 0
+    termino1 = 0.5 * np.pi * r**2
+    termino2 = r**2 * np.arcsin(h/r)
+    termino3 = h * np.sqrt(r**2 - h**2)
+    return L * (termino1 - termino2 - termino3) - V_obj
+
+# El valor de 'h' representa la distancia desde la parte superior.
+# El intervalo lógico para h está entre 0 (lleno) y r (medio lleno).
+h_sol = biseccion(f_volumen, 0, 1, 0.01, name="App 1: Abrevadero (distancia h)")
+if h_sol is not None:
+    profundidad = r - h_sol # La profundidad del agua es el radio menos la distancia h
+    print(f"  > La profundidad del agua es aproximadamente: {profundidad:.4f} cm")
+
+# Aplicado 2: Caída libre con resistencia
+# s(t) = s0 - (m*g/k)*t + (m^2*g/k^2)*(1 - e^(-k*t/m))
+# Datos: s0=300, m=0.25, k=0.1, g=9.81
+s0 = 300.0
+m = 0.25
+k = 0.1
+g = 9.81
+
+def f_caida(t):
+    termino1 = (m * g / k) * t
+    termino2 = ((m**2 * g) / k**2) * (1 - np.exp(-k * t / m))
+    return s0 - termino1 + termino2
+
+# Buscamos t cuando s(t) = 0. Un buen intervalo inicial de tiempo estimado es [10, 20] segundos.
+biseccion(f_caida, 10, 20, 0.01, name="App 2: Objeto en caída libre (tiempo t)")
