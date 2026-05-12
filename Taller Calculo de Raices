@@ -1,0 +1,122 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+from scipy import optimize
+
+# ==========================================
+# DEFINICIÓN DE FUNCIONES Y DERIVADAS
+# ==========================================
+
+# Literal 1
+def f1(x): return x**4 + 540*x**3 + 109124*x**2 + 9781632*x + 328188672
+def df1(x): return 4*x**3 + 1620*x**2 + 218248*x + 9781632
+
+# Literal 2
+def f2(x): return (x + 9)**2 - 17
+
+# Literal 3
+def f3(x): return np.sin(x)/x - 0.015
+def df3(x): return (x*np.cos(x) - np.sin(x))/(x**2)
+
+# ==========================================
+# WRAPPERS PARA REGISTRAR ITERACIONES SCIPY
+# ==========================================
+# Scipy no devuelve el historial por defecto, así que interceptamos las llamadas.
+
+hist_1 = []
+def f1_wrap(x):
+    if not hist_1 or x != hist_1[-1]: hist_1.append(x)
+    return f1(x)
+
+hist_2 = []
+def f2_wrap(x):
+    # En bisección, evaluamos múltiples puntos. Filtramos los bordes iniciales.
+    hist_2.append(x)
+    return f2(x)
+
+hist_3 = []
+def f3_wrap(x):
+    if not hist_3 or x != hist_3[-1]: hist_3.append(x)
+    return f3(x)
+
+# ==========================================
+# EJECUCIÓN DE LOS ALGORITMOS DE SCIPY
+# ==========================================
+
+# 1. Newton para el polinomio (iniciamos en x0 = -60)
+try:
+    root1 = optimize.newton(f1_wrap, x0=-60, fprime=df1)
+except RuntimeError:
+    root1 = hist_1[-1] # En caso de que las raíces sean complejas o no converja
+
+# 2. Bisección para la intersección de curvas (intervalo [-8, -2])
+root2 = optimize.bisect(f2_wrap, -8, -2)
+# Scipy evalúa a, b primero. Tomamos las evaluaciones intermedias como iteraciones.
+hist_2 = hist_2[2:] 
+
+# 3. Newton para la trascendente (iniciamos en x0 = 65)
+root3 = optimize.newton(f3_wrap, x0=65, fprime=df3)
+
+# ==========================================
+# ANIMACIÓN DEL PROCESO ITERATIVO
+# ==========================================
+
+fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
+fig.suptitle('Proceso Iterativo de Búsqueda de Raíces (Scipy)')
+
+# Preparar ejes para el Literal 1
+x1_vals = np.linspace(-150, 50, 400)
+ax1.plot(x1_vals, f1(x1_vals), label='P(x)', color='blue')
+ax1.axhline(0, color='black', linewidth=1)
+ax1.set_title("1. Polinomio (Newton)")
+pt1, = ax1.plot([], [], 'ro', markersize=8, label='Iteración')
+ax1.legend()
+
+# Preparar ejes para el Literal 2
+x2_vals = np.linspace(-15, -2, 400)
+ax2.plot(x2_vals, f2(x2_vals), label='(x+9)^2 - 17', color='green')
+ax2.axhline(0, color='black', linewidth=1)
+ax2.set_title("2. Intersección (Bisección)")
+pt2, = ax2.plot([], [], 'ro', markersize=8, label='Iteración')
+ax2.legend()
+
+# Preparar ejes para el Literal 3
+x3_vals = np.linspace(60, 75, 400)
+ax3.plot(x3_vals, f3(x3_vals) + 0.015, label='sin(x)/x', color='purple')
+ax3.axhline(0.015, color='red', linestyle='--', label='y = 0.015')
+ax3.set_title("3. Función Trascendente (Newton)")
+pt3, = ax3.plot([], [], 'ro', markersize=8, label='Iteración')
+ax3.legend()
+
+def init():
+    pt1.set_data([], [])
+    pt2.set_data([], [])
+    pt3.set_data([], [])
+    return pt1, pt2, pt3
+
+def animate(i):
+    # Animación Literal 1
+    if i < len(hist_1):
+        pt1.set_data([hist_1[i]], [f1(hist_1[i])])
+    
+    # Animación Literal 2
+    if i < len(hist_2):
+        pt2.set_data([hist_2[i]], [f2(hist_2[i])])
+        
+    # Animación Literal 3
+    if i < len(hist_3):
+        pt3.set_data([hist_3[i]], [f3(hist_3[i]) + 0.015])
+        
+    return pt1, pt2, pt3
+
+max_frames = max(len(hist_1), len(hist_2), len(hist_3))
+ani = animation.FuncAnimation(fig, animate, init_func=init, frames=max_frames, 
+                              interval=800, blit=True, repeat_delay=2000)
+
+plt.tight_layout()
+plt.show()
+
+# Imprimir Resultados finalizados por Scipy
+print(f"Raíz Literal 1 (Newton): x = {root1}")
+print(f"Raíz Literal 2 (Bisección): x = {root2}")
+print(f"Punto de corte Literal 3 (Newton): x_T = {root3}")
