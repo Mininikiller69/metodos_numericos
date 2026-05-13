@@ -1,25 +1,194 @@
 import math
 
-def newton(f, df, p0, tol, max_iter=100):
-    for i in range(max_iter):
-        f_der = df(p0)
-        if f_der == 0:
-            print("Error: Derivada cero.")
-            return None
-        p1 = p0 - f(p0) / f_der
-        if abs(p1 - p0) < tol:
-            return p1
-        p0 = p1
-    return p0
+# ==========================================
+# IMPLEMENTACIÓN DE LOS MÉTODOS NUMÉRICOS
+# ==========================================
 
-def secante(f, p0, p1, tol, max_iter=100):
-    for i in range(max_iter):
-        den = f(p1) - f(p0)
-        if den == 0:
-            print("Error: División por cero.")
+def newton(f, df, p0, tol=1e-7, max_iter=100, verbose=False):
+    """Método de Newton-Raphson."""
+    p_prev = p0
+    for i in range(1, max_iter + 1):
+        derivada = df(p_prev)
+        if derivada == 0:
+            if verbose: print(f"  [!] Error: Derivada cero en la iteración {i}. El método falla.")
             return None
-        p2 = p1 - f(p1) * (p1 - p0) / den
-        if abs(p2 - p1) < tol:
-            return p2
-        p0, p1 = p1, p2
-    return p1
+        
+        p = p_prev - f(p_prev) / derivada
+        if verbose: print(f"  Iter {i}: p_{i} = {p:.8f} | f(p_{i}) = {f(p):.8f}")
+        
+        if abs(p - p_prev) < tol:
+            return p
+        p_prev = p
+    if verbose: print("  [!] Máximo de iteraciones alcanzado.")
+    return p_prev
+
+def secante(f, p0, p1, tol=1e-7, max_iter=100, verbose=False):
+    """Método de la Secante."""
+    for i in range(2, max_iter + 2):
+        denominador = f(p1) - f(p0)
+        if denominador == 0:
+            if verbose: print(f"  [!] Error: División por cero en la iteración {i}.")
+            return None
+        
+        p = p1 - f(p1) * (p1 - p0) / denominador
+        if verbose: print(f"  Iter {i}: p_{i} = {p:.8f} | f(p_{i}) = {f(p):.8f}")
+        
+        if abs(p - p1) < tol:
+            return p
+        p0, p1 = p1, p
+    if verbose: print("  [!] Máximo de iteraciones alcanzado.")
+    return p
+
+def biseccion(f, a, b, num_iters):
+    """Método de Bisección (fijo a número de iteraciones para el Ejercicio 5)."""
+    for i in range(1, num_iters + 1):
+        p = a + (b - a) / 2
+        print(f"  Iter {i}: p = {p:.8f}")
+        if f(p) == 0: break
+        if f(a) * f(p) < 0:
+            b = p
+        else:
+            a = p
+    return p
+
+# Función auxiliar para raíces cúbicas reales (Ejercicio 7)
+def cbrt(x):
+    return math.copysign(abs(x)**(1/3), x)
+
+# ==========================================
+# RESOLUCIÓN DE LOS EJERCICIOS
+# ==========================================
+
+def resolver_ejercicios():
+    print("="*60)
+    print("   RESOLUCIÓN DE EJERCICIOS - MÉTODOS NUMÉRICOS")
+    print("="*60 + "\n")
+
+    # --- EJERCICIO 1 ---
+    print("EJERCICIO 1: f(x) = -x^3 - cos(x)")
+    f1 = lambda x: -x**3 - math.cos(x)
+    df1 = lambda x: -3*x**2 + math.sin(x)
+    
+    print("-> Analizando p0 = 0 para Newton:")
+    print(f"   Derivada en p0=0: df(0) = {df1(0)}")
+    print("   Conclusión: NO se puede usar p0 = 0 porque la derivada es cero y causa división por cero.\n")
+    
+    print("-> Newton (p0 = -1) hasta p2:")
+    newton(f1, df1, p0=-1, tol=1e-10, max_iter=2, verbose=True)
+    
+    # Para la secante necesitamos 2 puntos. Usaremos p0=-1 y asumiremos p1=0.
+    print("\n-> Secante (asumiendo p0 = -1, p1 = 0) hasta p2:")
+    secante(f1, p0=-1, p1=0, tol=1e-10, max_iter=1, verbose=True) # 1 iteración genera p2
+    print("-" * 60)
+
+    # --- EJERCICIO 2 ---
+    print("EJERCICIO 2: Precisión de 1e-4")
+    tol2 = 1e-4
+    
+    f2a = lambda x: x**3 - 2*x**2 - 5
+    df2a = lambda x: 3*x**2 - 4*x
+    print(f"a. Raíz para x^3 - 2x^2 - 5 = 0 en [1,4]: {newton(f2a, df2a, 2.5, tol2):.5f}")
+    
+    f2b = lambda x: x**3 + 3*x**2 - 1
+    df2b = lambda x: 3*x**2 + 6*x
+    print(f"b. Raíz para x^3 + 3x^2 - 1 = 0 en [-3,-2]: {newton(f2b, df2b, -2.5, tol2):.5f}")
+    
+    f2c = lambda x: x - math.cos(x)
+    df2c = lambda x: 1 + math.sin(x)
+    print(f"c. Raíz para x - cos(x) = 0 en [0, pi/2]: {newton(f2c, df2c, 0.78, tol2):.5f}")
+    
+    f2d = lambda x: x - 0.8 - 0.2*math.sin(x)
+    df2d = lambda x: 1 - 0.2*math.cos(x)
+    print(f"d. Raíz para x - 0.8 - 0.2sin(x) = 0 en [0, pi/2]: {newton(f2d, df2d, 0.78, tol2):.5f}")
+    print("-" * 60)
+
+    # --- EJERCICIO 3 ---
+    print("EJERCICIO 3: Precisión de 1e-5 para 1 <= x <= 2")
+    tol3 = 1e-5
+    
+    f3a = lambda x: 3*x - math.exp(x)
+    df3a = lambda x: 3 - math.exp(x)
+    print("a. 3x - e^x = 0")
+    print(f"   Newton (p0=1.5): {newton(f3a, df3a, 1.5, tol3):.6f}")
+    print(f"   Secante (p0=1, p1=2): {secante(f3a, 1, 2, tol3):.6f}")
+    
+    f3b = lambda x: 2*x + 3*math.cos(x) - math.exp(x)
+    df3b = lambda x: 2 - 3*math.sin(x) - math.exp(x)
+    print("b. 2x + 3cos(x) - e^x = 0")
+    print(f"   Newton (p0=1.5): {newton(f3b, df3b, 1.5, tol3):.6f}")
+    print(f"   Secante (p0=1, p1=2): {secante(f3b, 1, 2, tol3):.6f}")
+    print("-" * 60)
+
+    # --- EJERCICIO 4 ---
+    print("EJERCICIO 4: Polinomio de 4to grado (Precisión 1e-6)")
+    f4 = lambda x: 230*x**4 + 18*x**3 + 9*x**2 - 221*x - 9
+    df4 = lambda x: 920*x**3 + 54*x**2 + 18*x - 221
+    tol4 = 1e-6
+    
+    print("a. Método de la Secante (usando extremos):")
+    print(f"   Raíz en [-1, 0]: {secante(f4, -1, 0, tol4):.7f}")
+    print(f"   Raíz en [0, 1]: {secante(f4, 0, 1, tol4):.7f}")
+    
+    print("b. Método de Newton (usando punto medio):")
+    print(f"   Raíz en [-1, 0] con p0=-0.5: {newton(f4, df4, -0.5, tol4):.7f}")
+    print(f"   Raíz en [0, 1] con p0=0.5: {newton(f4, df4, 0.5, tol4):.7f}")
+    print("-" * 60)
+
+    # --- EJERCICIO 5 ---
+    print("EJERCICIO 5: f(x) = tan(pi*x) - 6 con 10 iteraciones")
+    f5 = lambda x: math.tan(math.pi * x) - 6
+    df5 = lambda x: math.pi / (math.cos(math.pi * x)**2)
+    
+    print("a. Bisección en [0, 0.48]:")
+    biseccion(f5, 0, 0.48, 10)
+    
+    print("\nb. Newton (p0 = 0.48):")
+    newton(f5, df5, 0.48, max_iter=10, verbose=True)
+    
+    print("\nc. Secante (p0 = 0, p1 = 0.48):")
+    secante(f5, 0, 0.48, max_iter=10, verbose=True)
+    
+    print("\nConclusión: Newton es el más eficaz porque requiere menos iteraciones para converger a la precisión.")
+    print("Sin embargo, con funciones trigonométricas (asíntotas), requiere un buen p0. La secante es excelente aquí.")
+    print("-" * 60)
+
+    # --- EJERCICIO 6 ---
+    print("EJERCICIO 6: f(x) = ln(x^2 + 1) - e^(0.4x) * cos(pi*x)")
+    f6 = lambda x: math.log(x**2 + 1) - math.exp(0.4*x) * math.cos(math.pi*x)
+    df6 = lambda x: (2*x)/(x**2 + 1) - 0.4*math.exp(0.4*x)*math.cos(math.pi*x) + math.pi*math.exp(0.4*x)*math.sin(math.pi*x)
+    tol6 = 1e-6
+    
+    print("a. Único cero negativo:")
+    print(f"   {newton(f6, df6, -0.5, tol6):.7f}")
+    
+    print("b. Los cuatro ceros positivos más pequeños:")
+    print(f"   Cero 1: {newton(f6, df6, 0.5, tol6):.7f}")
+    print(f"   Cero 2: {newton(f6, df6, 1.5, tol6):.7f}")
+    print(f"   Cero 3: {newton(f6, df6, 2.5, tol6):.7f}")
+    print(f"   Cero 4: {newton(f6, df6, 3.5, tol6):.7f}")
+    
+    print("c. Estimación inicial para el enésimo cero positivo:")
+    print("   Dado que el término exponencial domina para x grandes, la función cruza el eje cuando")
+    print("   cos(pi*x) aprox 0. Esto ocurre en pi*x = pi/2 + k*pi, es decir, x = n - 0.5.")
+    
+    print("d. Vigesimoquinto (25to) cero positivo (p0 = 24.5):")
+    print(f"   {newton(f6, df6, 24.5, tol6):.7f}")
+    print("-" * 60)
+
+    # --- EJERCICIO 7 ---
+    print("EJERCICIO 7: f(x) = x^(1/3)")
+    f7 = lambda x: cbrt(x)
+    df7 = lambda x: (1/3) * (abs(x)**(-2/3)) if x != 0 else float('inf')
+    
+    print("Newton (p0 = 1):")
+    print("  Newton divergerá. La fórmula queda: p_{n+1} = p_n - f(p_n)/f'(p_n) = p_n - 3*p_n = -2*p_n")
+    newton(f7, df7, 1, max_iter=5, verbose=True)
+    
+    print("\nSecante (p0 = 5, p1 = 0.5):")
+    secante(f7, 5, 0.5, max_iter=8, verbose=True)
+    print("\nConclusión: Newton diverge debido a que la tangente se vuelve paralela al eje y cerca de x=0.")
+    print("La Secante, aunque oscila al principio, eventualmente logra reducir el intervalo en algunos casos,")
+    print("pero también sufre problemas por la geometría de la raíz cúbica.")
+
+if __name__ == "__main__":
+    resolver_ejercicios()
