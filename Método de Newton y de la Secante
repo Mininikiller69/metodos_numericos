@@ -1,0 +1,25 @@
+import math
+
+def newton(f, df, p0, tol, max_iter=100):
+    for i in range(max_iter):
+        f_der = df(p0)
+        if f_der == 0:
+            print("Error: Derivada cero.")
+            return None
+        p1 = p0 - f(p0) / f_der
+        if abs(p1 - p0) < tol:
+            return p1
+        p0 = p1
+    return p0
+
+def secante(f, p0, p1, tol, max_iter=100):
+    for i in range(max_iter):
+        den = f(p1) - f(p0)
+        if den == 0:
+            print("Error: División por cero.")
+            return None
+        p2 = p1 - f(p1) * (p1 - p0) / den
+        if abs(p2 - p1) < tol:
+            return p2
+        p0, p1 = p1, p2
+    return p1
