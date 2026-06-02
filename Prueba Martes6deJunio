@@ -1,0 +1,44 @@
+// Usando los métodos estudiados, determine todas las raíces de la ecuación: x5+5.25⋅x4+4.125⋅x3−9.125⋅x2−14.625⋅x−5.625=0.//
+
+import numpy as np
+from scipy.optimize import bisect, newton
+
+# Definición de la función
+def f(x):
+    return x**5 + 5.25*x**4 + 4.125*x**3 - 9.125*x**2 - 14.625*x - 5.625
+
+# Derivada para Newton
+def df(x):
+    return 5*x**4 + 21*x**3 + 12.375*x**2 - 18.25*x - 14.625
+
+# Buscar cambios de signo
+x = np.arange(-10, 10, 0.5)
+
+intervalos = []
+
+for i in range(len(x)-1):
+    if f(x[i]) * f(x[i+1]) < 0:
+        intervalos.append((x[i], x[i+1]))
+
+print("Intervalos con cambio de signo:")
+for a, b in intervalos:
+    print(f"[{a}, {b}]")
+
+# Método de Bisección
+print("\nRaíces por Bisección:")
+raices_bisect = []
+
+for a, b in intervalos:
+    r = bisect(f, a, b)
+    raices_bisect.append(r)
+    print(r)
+
+# Método de Newton
+print("\nRaíces por Newton:")
+
+raices_newton = []
+
+for r0 in raices_bisect:
+    r = newton(f, r0, fprime=df)
+    raices_newton.append(r)
+    print(r)
