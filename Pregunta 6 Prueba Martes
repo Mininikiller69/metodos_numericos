@@ -1,0 +1,36 @@
+def secant_method(f, x0, x1, tol=1e-4, max_iter=100):
+
+    x_prev = x0
+    x_curr = x1
+
+    # Evaluar la función una sola vez para cada punto inicial
+    f_prev = f(x_prev)
+    f_curr = f(x_curr)
+
+    iter_count = 0
+
+    while abs(f_curr) > tol and iter_count < max_iter:
+
+        # Fórmula del método de la secante
+        x_next = x_curr - f_curr * (x_curr - x_prev) / (f_curr - f_prev)
+
+        # Actualizar valores reutilizando evaluaciones previas
+        x_prev = x_curr
+        f_prev = f_curr
+
+        x_curr = x_next
+        f_curr = f(x_curr)
+
+        iter_count += 1
+
+    return x_curr, iter_count
+
+
+# Ejemplo de uso
+def f(x):
+    return x**2 - 4
+
+raiz, iteraciones = secant_method(f, 1, 3)
+
+print("Raíz aproximada:", raiz)
+print("Iteraciones:", iteraciones)
