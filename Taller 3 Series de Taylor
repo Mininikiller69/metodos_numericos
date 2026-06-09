@@ -1,0 +1,271 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import sympy as sp
+
+# =====================================================
+# CONFIGURACIÓN
+# =====================================================
+
+x = sp.Symbol('x')
+
+# =====================================================
+# FUNCIÓN PARA TAYLOR
+# =====================================================
+
+def taylor(f, x0, n):
+    return sp.series(f, x, x0, n + 1).removeO()
+
+# =====================================================
+# POLINOMIOS DE TAYLOR
+# =====================================================
+
+print("="*70)
+print("POLINOMIOS DE TAYLOR")
+print("="*70)
+
+ordenes = [2, 4, 6, 8, 10]
+
+# cos(x)
+print("\ncos(x) alrededor de x0 = 0\n")
+
+for n in ordenes:
+    pol = sp.expand(taylor(sp.cos(x), 0, n))
+    print(f"Orden {n}:")
+    print(pol)
+    print()
+
+# 1/(1-x)
+print("\n" + "="*70)
+print("\n1/(1-x) alrededor de x0 = 0\n")
+
+for n in ordenes:
+    pol = sp.expand(taylor(1/(1-x), 0, n))
+    print(f"Orden {n}:")
+    print(pol)
+    print()
+
+# ln(x)
+print("\n" + "="*70)
+print("\nln(x) alrededor de x0 = 1\n")
+
+for n in ordenes:
+    pol = sp.expand(taylor(sp.ln(x), 1, n))
+    print(f"Orden {n}:")
+    print(pol)
+    print()
+
+# =====================================================
+# GRÁFICAS DE TAYLOR
+# =====================================================
+
+x_cos = np.linspace(-2*np.pi, 2*np.pi, 500)
+x_frac = np.linspace(-0.9, 0.9, 500)
+x_ln = np.linspace(0.2, 2, 500)
+
+fig, axs = plt.subplots(1, 3, figsize=(18, 5))
+
+# -------------------- cos(x) --------------------
+
+axs[0].plot(
+    x_cos,
+    np.cos(x_cos),
+    linewidth=3,
+    label='cos(x)'
+)
+
+for n in ordenes:
+
+    pol = taylor(sp.cos(x), 0, n)
+    p = sp.lambdify(x, pol, 'numpy')
+
+    y = p(x_cos)
+
+    if np.isscalar(y):
+        y = np.full_like(x_cos, float(y))
+
+    axs[0].plot(
+        x_cos,
+        y,
+        label=f'Orden {n}'
+    )
+
+axs[0].set_title('Taylor de cos(x)')
+axs[0].grid(True)
+axs[0].legend()
+
+# -------------------- 1/(1-x) --------------------
+
+axs[1].plot(
+    x_frac,
+    1/(1-x_frac),
+    linewidth=3,
+    label='1/(1-x)'
+)
+
+for n in ordenes:
+
+    pol = taylor(1/(1-x), 0, n)
+    p = sp.lambdify(x, pol, 'numpy')
+
+    y = p(x_frac)
+
+    if np.isscalar(y):
+        y = np.full_like(x_frac, float(y))
+
+    axs[1].plot(
+        x_frac,
+        y,
+        label=f'Orden {n}'
+    )
+
+axs[1].set_title('Taylor de 1/(1-x)')
+axs[1].grid(True)
+axs[1].legend()
+
+# -------------------- ln(x) --------------------
+
+axs[2].plot(
+    x_ln,
+    np.log(x_ln),
+    linewidth=3,
+    label='ln(x)'
+)
+
+for n in ordenes:
+
+    pol = taylor(sp.ln(x), 1, n)
+    p = sp.lambdify(x, pol, 'numpy')
+
+    y = p(x_ln)
+
+    if np.isscalar(y):
+        y = np.full_like(x_ln, float(y))
+
+    axs[2].plot(
+        x_ln,
+        y,
+        label=f'Orden {n}'
+    )
+
+axs[2].set_title('Taylor de ln(x)')
+axs[2].grid(True)
+axs[2].legend()
+
+plt.tight_layout()
+plt.show()
+
+# =====================================================
+# POLINOMIO DE LAGRANGE
+# =====================================================
+
+def lagrange_simbolico(xdatos, ydatos):
+
+    n = len(xdatos)
+    P = 0
+
+    for i in range(n):
+
+        Li = 1
+
+        for j in range(n):
+
+            if i != j:
+                Li *= (x - xdatos[j])/(xdatos[i] - xdatos[j])
+
+        P += ydatos[i]*Li
+
+    return sp.expand(P)
+
+# =====================================================
+# FUNCIÓN PARA MOSTRAR Y GRAFICAR
+# =====================================================
+
+def mostrar_lagrange(xdatos, ydatos, titulo):
+
+    P = lagrange_simbolico(xdatos, ydatos)
+
+    print("\n" + "="*70)
+    print(titulo)
+    print("="*70)
+
+    print("\nPolinomio de Lagrange:\n")
+    print(P)
+
+    f = sp.lambdify(x, P, 'numpy')
+
+    xx = np.linspace(
+        min(xdatos)-5,
+        max(xdatos)+5,
+        500
+    )
+
+    plt.figure(figsize=(8,5))
+
+    plt.plot(
+        xx,
+        f(xx),
+        linewidth=2,
+        label='Polinomio'
+    )
+
+    plt.scatter(
+        xdatos,
+        ydatos,
+        s=70,
+        label='Datos'
+    )
+
+    plt.title(titulo)
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+
+# =====================================================
+# EJERCICIO 1
+# (0,0),(30,0.5),(60,sqrt(3)/2),(90,1)
+# =====================================================
+
+x1 = np.array([0, 30, 60, 90], dtype=float)
+
+y1 = np.array([
+    0,
+    0.5,
+    np.sqrt(3)/2,
+    1
+], dtype=float)
+
+mostrar_lagrange(
+    x1,
+    y1,
+    "Ejercicio 1"
+)
+
+# =====================================================
+# EJERCICIO 2
+# (1,1),(2,2),(3,2)
+# =====================================================
+
+x2 = np.array([1, 2, 3], dtype=float)
+
+y2 = np.array([1, 2, 2], dtype=float)
+
+mostrar_lagrange(
+    x2,
+    y2,
+    "Ejercicio 2"
+)
+
+# =====================================================
+# EJERCICIO 3
+# (-2,5),(1,7),(3,11),(7,34)
+# =====================================================
+
+x3 = np.array([-2, 1, 3, 7], dtype=float)
+
+y3 = np.array([5, 7, 11, 34], dtype=float)
+
+mostrar_lagrange(
+    x3,
+    y3,
+    "Ejercicio 3"
+)
