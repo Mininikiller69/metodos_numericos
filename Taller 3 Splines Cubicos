@@ -1,0 +1,12 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+from scipy.interpolate import CubicSpline
+
+from matplotlib.animation import FuncAnimation
+from IPython.display import HTML
+
+import ipywidgets as widgets
+from IPython.display import display
+
+plt.style.use('default')
