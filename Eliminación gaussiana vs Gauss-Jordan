@@ -1,0 +1,238 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# =====================================================
+# ELIMINACION GAUSSIANA
+# =====================================================
+
+def gauss(A, b):
+
+    A = A.astype(float).copy()
+    b = b.astype(float).copy()
+
+    n = len(b)
+
+    mult_div = 0
+    sum_rest = 0
+    intercambios = 0
+
+    # Eliminacion hacia adelante
+    for k in range(n - 1):
+
+        # Pivotamiento parcial
+        fila_max = np.argmax(abs(A[k:, k])) + k
+
+        if fila_max != k:
+            A[[k, fila_max]] = A[[fila_max, k]]
+            b[[k, fila_max]] = b[[fila_max, k]]
+            intercambios += 1
+
+        for i in range(k + 1, n):
+
+            factor = A[i, k] / A[k, k]
+            mult_div += 1
+
+            for j in range(k, n):
+
+                A[i, j] = A[i, j] - factor * A[k, j]
+
+                mult_div += 1
+                sum_rest += 1
+
+            b[i] = b[i] - factor * b[k]
+
+            mult_div += 1
+            sum_rest += 1
+
+    # Sustitucion regresiva
+    x = np.zeros(n)
+
+    for i in range(n - 1, -1, -1):
+
+        suma = 0
+
+        for j in range(i + 1, n):
+
+            suma += A[i, j] * x[j]
+
+            mult_div += 1
+            sum_rest += 1
+
+        x[i] = (b[i] - suma) / A[i, i]
+
+        mult_div += 1
+        sum_rest += 1
+
+    return x, mult_div, sum_rest, intercambios
+
+
+# =====================================================
+# GAUSS-JORDAN
+# =====================================================
+
+def gauss_jordan(A, b):
+
+    A = A.astype(float).copy()
+    b = b.astype(float).copy()
+
+    n = len(b)
+
+    Ab = np.column_stack((A, b))
+
+    mult_div = 0
+    sum_rest = 0
+    intercambios = 0
+
+    for i in range(n):
+
+        fila_max = np.argmax(abs(Ab[i:, i])) + i
+
+        if fila_max != i:
+            Ab[[i, fila_max]] = Ab[[fila_max, i]]
+            intercambios += 1
+
+        pivote = Ab[i, i]
+
+        # Normalizacion
+        for j in range(n + 1):
+
+            Ab[i, j] /= pivote
+            mult_div += 1
+
+        # Eliminacion
+        for k in range(n):
+
+            if k != i:
+
+                factor = Ab[k, i]
+
+                for j in range(n + 1):
+
+                    Ab[k, j] -= factor * Ab[i, j]
+
+                    mult_div += 1
+                    sum_rest += 1
+
+    x = Ab[:, -1]
+
+    return x, mult_div, sum_rest, intercambios
+
+
+# =====================================================
+# PRUEBA CON VARIOS TAMAÑOS
+# =====================================================
+
+np.random.seed(123)
+
+tamanos = [3, 4, 5, 6, 8, 10, 12]
+
+resultados = []
+
+for n in tamanos:
+
+    while True:
+
+        A = np.random.randint(1, 20, (n, n)).astype(float)
+
+        if abs(np.linalg.det(A)) > 1e-6:
+            break
+
+    b = np.random.randint(1, 20, n).astype(float)
+
+    _, md_g, sr_g, int_g = gauss(A, b)
+
+    _, md_j, sr_j, int_j = gauss_jordan(A, b)
+
+    total_g = md_g + sr_g
+    total_j = md_j + sr_j
+
+    teorico_g = (n**3) / 3
+    teorico_j = (2 * n**3) / 3
+
+    resultados.append([
+        n,
+        md_g,
+        sr_g,
+        int_g,
+        total_g,
+        md_j,
+        sr_j,
+        int_j,
+        total_j,
+        teorico_g,
+        teorico_j
+    ])
+
+# =====================================================
+# TABLA DE RESULTADOS
+# =====================================================
+
+tabla = pd.DataFrame(resultados,
+columns=[
+    "n",
+    "Gauss Mult/Div",
+    "Gauss Sum/Rest",
+    "Gauss Intercambios",
+    "Gauss Total",
+    "Jordan Mult/Div",
+    "Jordan Sum/Rest",
+    "Jordan Intercambios",
+    "Jordan Total",
+    "Gauss Teorico",
+    "Jordan Teorico"
+])
+
+print(tabla)
+
+# =====================================================
+# GRAFICA
+# =====================================================
+
+plt.figure(figsize=(10,6))
+
+plt.plot(
+    tabla["n"],
+    tabla["Gauss Total"],
+    marker="o",
+    label="Gauss Experimental"
+)
+
+plt.plot(
+    tabla["n"],
+    tabla["Jordan Total"],
+    marker="s",
+    label="Gauss-Jordan Experimental"
+)
+
+plt.plot(
+    tabla["n"],
+    tabla["Gauss Teorico"],
+    "--",
+    label="Gauss Teórico"
+)
+
+plt.plot(
+    tabla["n"],
+    tabla["Jordan Teorico"],
+    "--",
+    label="Gauss-Jordan Teórico"
+)
+
+plt.title("Comparación de Complejidad")
+plt.xlabel("Tamaño del sistema n")
+plt.ylabel("Número de operaciones")
+plt.grid(True)
+plt.legend()
+
+plt.show()
+
+# =====================================================
+# CONCLUSIONES
+# =====================================================
+
+print("\nCONCLUSIONES")
+print("1. Ambos métodos tienen complejidad O(n³).")
+print("2. Gauss-Jordan realiza más operaciones que Gauss.")
+print("3. El número de intercambios depende del pivotamiento.")
+print("4. Los resultados experimentales siguen la tendencia teórica.")
