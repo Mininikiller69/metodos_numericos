@@ -1,0 +1,103 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# =====================================================
+# CONJUNTO DE DATOS 1
+# =====================================================
+
+x1 = np.array([
+    3.38,0.35,2.07,-0.45,-0.55,-1.06,-2.77,
+    3.08,-3.98,-5,-3.18,-1.96,2.37,-1.66,4.09
+])
+
+y1 = np.array([
+    -0.04,1.28,0.65,2.18,1.70,1.96,3.36,
+    0.18,3.35,4.16,2.95,2.34,0.38,1.75,-1.06
+])
+
+# Ajuste lineal
+coef1 = np.polyfit(x1, y1, 1)
+
+m1 = coef1[0]
+b1 = coef1[1]
+
+print("CONJUNTO 1")
+print("Pendiente =", m1)
+print("Intercepto =", b1)
+
+xg = np.linspace(min(x1), max(x1), 500)
+
+plt.figure(figsize=(8,6))
+plt.scatter(x1, y1, label="Datos")
+plt.plot(xg, m1*xg+b1, linewidth=2,
+         label=f"y={m1:.4f}x+{b1:.4f}")
+plt.grid(True)
+plt.legend()
+plt.title("Minimos Cuadrados - Conjunto 1")
+plt.show()
+
+
+# =====================================================
+# CONJUNTO DE DATOS 2
+# =====================================================
+
+x2 = np.array([
+3.38,0.35,2.07,-0.45,-0.56,-1.06,-2.78,3.08,
+-3.99,-5.00,-3.18,-1.97,2.37,-1.67,4.09,
+-4.60,2.68,2.78,-3.79,-1.87
+])
+
+y2 = np.array([
+15.65,-11.20,-4.00,18.03,7.94,15.32,-4.40,
+1.39,-11.92,-90.24,6.92,28.35,-2.41,-5.47,
+35.91,-55.53,0.77,4.79,-27.05,2.85
+])
+
+coef2 = np.polyfit(x2, y2, 1)
+
+m2 = coef2[0]
+b2 = coef2[1]
+
+print("\nCONJUNTO 2")
+print("Pendiente =", m2)
+print("Intercepto =", b2)
+
+xg2 = np.linspace(min(x2), max(x2), 500)
+
+plt.figure(figsize=(8,6))
+plt.scatter(x2, y2, label="Datos")
+plt.plot(xg2, m2*xg2+b2, linewidth=2,
+         label=f"y={m2:.4f}x+{b2:.4f}")
+plt.grid(True)
+plt.legend()
+plt.title("Minimos Cuadrados - Conjunto 2")
+plt.show()
+
+
+# =====================================================
+# AJUSTE CUADRÁTICO CONJUNTO 2
+# =====================================================
+
+coef_cuad = np.polyfit(x2, y2, 2)
+
+a = coef_cuad[0]
+b = coef_cuad[1]
+c = coef_cuad[2]
+
+print("\nAJUSTE CUADRATICO")
+print(f"y = {a:.6f}x² + {b:.6f}x + {c:.6f}")
+
+plt.figure(figsize=(8,6))
+plt.scatter(x2, y2)
+
+plt.plot(
+    xg2,
+    a*xg2**2+b*xg2+c,
+    linewidth=2,
+    label="Ajuste cuadrático"
+)
+
+plt.grid(True)
+plt.legend()
+plt.title("Conjunto 2 - Ajuste Cuadrático")
+plt.show()
