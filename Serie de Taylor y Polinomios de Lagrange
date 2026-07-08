@@ -1,0 +1,400 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from math import factorial
+import sympy as sp
+from scipy.interpolate import lagrange
+
+# Configuración de gráficos
+plt.rcParams['figure.figsize'] = [14, 10]
+plt.rcParams['font.size'] = 11
+
+print("=" * 80)
+print("ANÁLISIS DE APROXIMACIONES: SERIE DE TAYLOR Y POLINOMIOS DE LAGRANGE")
+print("=" * 80)
+
+# ============================================================================
+# EJERCICIO 1: f(x) = 125*x^2 + 1, x0 = 0
+# ============================================================================
+
+def f1(x):
+    return 125*x**2 + 1
+
+# Derivadas para Taylor
+def derivadas_f1(x0, n_max):
+    derivadas = []
+    for n in range(n_max + 1):
+        if n == 0:
+            derivadas.append(f1(x0))
+        elif n == 1:
+            derivadas.append(250*x0)
+        elif n == 2:
+            derivadas.append(250)
+        else:
+            derivadas.append(0)
+    return derivadas
+
+def taylor_f1(x, x0, n):
+    resultado = 0
+    for k in range(n + 1):
+        if k == 0:
+            derivada = f1(x0)
+        elif k == 1:
+            derivada = 250*x0
+        elif k == 2:
+            derivada = 250
+        else:
+            derivada = 0
+        resultado += (derivada / factorial(k)) * (x - x0)**k
+    return resultado
+
+# Polinomios de Lagrange
+def lagrange_poly(x, x_points, y_points):
+    n = len(x_points)
+    resultado = np.zeros_like(x)
+    for i in range(n):
+        termino = np.ones_like(x)
+        for j in range(n):
+            if i != j:
+                termino *= (x - x_points[j]) / (x_points[i] - x_points[j])
+        resultado += y_points[i] * termino
+    return resultado
+
+print("\n" + "=" * 80)
+print("EJERCICIO 1: f(x) = 125x² + 1, x₀ = 0")
+print("=" * 80)
+
+# Calcular derivadas
+x0_1 = 0
+derivadas_1 = derivadas_f1(x0_1, 5)
+
+print("\nDERIVADAS EN x₀ = 0:")
+print(f"f(0) = {derivadas_1[0]}")
+print(f"f'(0) = {derivadas_1[1]}")
+print(f"f''(0) = {derivadas_1[2]}")
+print(f"f'''(0) = {derivadas_1[3]}")
+print(f"f⁽⁴⁾(0) = {derivadas_1[4]}")
+print(f"f⁽⁵⁾(0) = {derivadas_1[5]}")
+
+print("\nPOLINOMIOS DE TAYLOR:")
+print(f"P₀(x) = {derivadas_1[0]}")
+print(f"P₁(x) = {derivadas_1[0]} + {derivadas_1[1]}·x = 1")
+print(f"P₂(x) = 1 + 0·x + ({derivadas_1[2]}/2!)·x² = 1 + 125x²")
+print(f"P₃(x) = 1 + 125x² + 0 = 1 + 125x²")
+print("\n✓ El polinomio de Taylor de orden 2 es EXACTO")
+
+print("\nPOLINOMIOS DE LAGRANGE:")
+print("n=1 (2 puntos): (-1, 126), (1, 126)")
+print("L₁(x) = 126")
+print("\nn=2 (3 puntos): (-1, 126), (0, 1), (1, 126)")
+print("L₂(x) = 125x² + 1")
+print("\n✓ El polinomio de Lagrange con 3 puntos es EXACTO")
+
+# Generar datos para gráficas
+x1 = np.linspace(-1.5, 1.5, 1000)
+y1_real = f1(x1)
+
+# Taylor
+taylor_ordenes_1 = [0, 1, 2, 3]
+y1_taylor = {}
+for n in taylor_ordenes_1:
+    y1_taylor[n] = taylor_f1(x1, 0, n)
+
+# Lagrange
+lagrange_puntos_1 = {
+    2: np.array([-1, 1]),
+    3: np.array([-1, 0, 1]),
+    4: np.array([-1.5, -0.5, 0.5, 1.5])
+}
+y1_lagrange = {}
+for n, pts in lagrange_puntos_1.items():
+    y_pts = f1(pts)
+    y1_lagrange[n] = lagrange_poly(x1, pts, y_pts)
+
+# ============================================================================
+# EJERCICIO 2: f(x) = arctan(x), x0 = 1
+# ============================================================================
+
+def f2(x):
+    return np.arctan(x)
+
+def taylor_arctan_sympy(x, x0, n):
+    """Calcula Taylor de arctan usando sympy"""
+    x_sym = sp.Symbol('x')
+    f_sym = sp.atan(x_sym)
+    resultado = 0
+    for k in range(n + 1):
+        derivada = sp.diff(f_sym, x_sym, k)
+        valor = float(derivada.subs(x_sym, x0))
+        resultado += (valor / factorial(k)) * (x - x0)**k
+    return resultado
+
+print("\n" + "=" * 80)
+print("EJERCICIO 2: f(x) = arctan(x), x₀ = 1")
+print("=" * 80)
+
+# Calcular derivadas con sympy
+x_sym = sp.Symbol('x')
+f_sym = sp.atan(x_sym)
+x0_2 = 1
+
+print("\nDERIVADAS EN x₀ = 1:")
+for k in range(8):
+    derivada = sp.diff(f_sym, x_sym, k)
+    valor = derivada.subs(x_sym, x0_2)
+    if k == 0:
+        print(f"f(1) = {sp.simplify(valor)} = {float(valor):.6f}")
+    else:
+        print(f"f⁽{k}⁾(1) = {sp.simplify(valor)} = {float(valor):.6f}")
+
+print("\nPOLINOMIOS DE TAYLOR:")
+print(f"P₁(x) = π/4 + (1/2)(x-1)")
+print(f"P₂(x) = π/4 + (1/2)(x-1) - (1/4)(x-1)²")
+print(f"P₃(x) = π/4 + (1/2)(x-1) - (1/4)(x-1)² + (1/12)(x-1)³")
+print(f"P₄(x) = P₃(x)")
+print(f"P₅(x) = π/4 + (1/2)(x-1) - (1/4)(x-1)² + (1/12)(x-1)³ - (1/40)(x-1)⁵")
+print(f"P₆(x) = P₅(x)")
+print(f"P₇(x) = π/4 + (1/2)(x-1) - (1/4)(x-1)² + (1/12)(x-1)³ - (1/40)(x-1)⁵ + (1/168)(x-1)⁷")
+
+print("\nPOLINOMIOS DE LAGRANGE:")
+print("n=1 (2 puntos): (0, 0), (2, arctan(2))")
+print("L₁(x) = [arctan(2)/2]·x")
+print("\nn=2 (3 puntos): (0, 0), (1, π/4), (2, arctan(2))")
+print("L₂(x) = -(π/4)x(x-2) + [arctan(2)/2]x(x-1)")
+print("\nn=3 (4 puntos): (-1, -π/4), (0, 0), (1, π/4), (2, arctan(2))")
+print("L₃(x) = (π/24)x(x-1)(x-2) - (π/8)x(x+1)(x-2) + [arctan(2)/6]x(x+1)(x-1)")
+
+# Generar datos para gráficas
+x2 = np.linspace(-3, 3, 1000)
+y2_real = f2(x2)
+
+# Taylor
+taylor_ordenes_2 = [1, 3, 5, 7]
+y2_taylor = {}
+for n in taylor_ordenes_2:
+    y2_taylor[n] = taylor_arctan_sympy(x2, 1, n)
+
+# Lagrange
+lagrange_puntos_2 = {
+    2: np.array([0, 2]),
+    3: np.array([0, 1, 2]),
+    4: np.array([-1, 0, 1, 2]),
+    6: np.array([-2, -1.33, -0.67, 0, 0.67, 1.33, 2])
+}
+y2_lagrange = {}
+for n, pts in lagrange_puntos_2.items():
+    y_pts = f2(pts)
+    y2_lagrange[n] = lagrange_poly(x2, pts, y_pts)
+
+# ============================================================================
+# DETERMINAR EL ORDEN DE MEJOR APROXIMACIÓN
+# ============================================================================
+
+print("\n" + "=" * 80)
+print("DETERMINACIÖN DEL ORDEN DE MEJOR APROXIMACIÓN")
+print("=" * 80)
+
+# Para función 1
+x_test1 = 1.0
+error_taylor1 = {}
+for n in taylor_ordenes_1:
+    y_taylor = taylor_f1(x_test1, 0, n)
+    error_taylor1[n] = abs(f1(x_test1) - y_taylor)
+
+error_lagrange1 = {}
+for n, pts in lagrange_puntos_1.items():
+    y_lagrange = lagrange_poly(np.array([x_test1]), pts, f1(pts))[0]
+    error_lagrange1[n] = abs(f1(x_test1) - y_lagrange)
+
+print("\nFUNCIÓN 1: f(x) = 125x² + 1")
+print(f"Valor real en x = {x_test1}: {f1(x_test1)}")
+print("\nErrores de Taylor:")
+for n, error in error_taylor1.items():
+    print(f"  Orden {n}: {error:.10f}")
+print("\nErrores de Lagrange:")
+for n, error in error_lagrange1.items():
+    print(f"  {n} puntos: {error:.10f}")
+
+mejor_taylor1 = min(error_taylor1, key=error_taylor1.get)
+mejor_lagrange1 = min(error_lagrange1, key=error_lagrange1.get)
+print(f"\n✓ MEJOR TAYLOR: Orden {mejor_taylor1}")
+print(f"✓ MEJOR LAGRANGE: {mejor_lagrange1} puntos")
+
+# Para función 2
+x_test2 = 1.5
+error_taylor2 = {}
+for n in taylor_ordenes_2:
+    y_taylor = taylor_arctan_sympy(x_test2, 1, n)
+    error_taylor2[n] = abs(f2(x_test2) - y_taylor)
+
+error_lagrange2 = {}
+for n, pts in lagrange_puntos_2.items():
+    y_lagrange = lagrange_poly(np.array([x_test2]), pts, f2(pts))[0]
+    error_lagrange2[n] = abs(f2(x_test2) - y_lagrange)
+
+print(f"\nFUNCIÓN 2: arctan(x)")
+print(f"Valor real en x = {x_test2}: {f2(x_test2):.6f}")
+print("\nErrores de Taylor:")
+for n, error in error_taylor2.items():
+    print(f"  Orden {n}: {error:.6f}")
+print("\nErrores de Lagrange:")
+for n, error in error_lagrange2.items():
+    print(f"  {n} puntos: {error:.6f}")
+
+mejor_taylor2 = min(error_taylor2, key=error_taylor2.get)
+mejor_lagrange2 = min(error_lagrange2, key=error_lagrange2.get)
+print(f"\n✓ MEJOR TAYLOR: Orden {mejor_taylor2}")
+print(f"✓ MEJOR LAGRANGE: {mejor_lagrange2} puntos")
+
+# ============================================================================
+# GRÁFICAS
+# ============================================================================
+
+# Figura 1: Taylor y Lagrange para función 1
+fig1, axes1 = plt.subplots(1, 2, figsize=(15, 6))
+
+# Taylor
+ax = axes1[0]
+ax.plot(x1, y1_real, 'k-', label='f(x) = 125x² + 1', linewidth=2.5)
+colores = ['r', 'g', 'b', 'm']
+for i, (n, y) in enumerate(y1_taylor.items()):
+    if n <= 2:
+        estilo = '-'
+    else:
+        estilo = '--'
+    ax.plot(x1, y, f'{colores[i]}{estilo}', label=f'P_{n}(x)', linewidth=1.8)
+ax.set_xlabel('x', fontsize=12)
+ax.set_ylabel('f(x)', fontsize=12)
+ax.set_title('Serie de Taylor - f(x) = 125x² + 1', fontsize=14)
+ax.grid(True, alpha=0.3)
+ax.legend(fontsize=10)
+ax.set_ylim(-5, 300)
+
+# Lagrange
+ax = axes1[1]
+ax.plot(x1, y1_real, 'k-', label='f(x) = 125x² + 1', linewidth=2.5)
+colores = ['r', 'g', 'b']
+for i, (n, y) in enumerate(y1_lagrange.items()):
+    if n == 3:
+        estilo = '-'
+    else:
+        estilo = '--'
+    ax.plot(x1, y, f'{colores[i]}{estilo}', label=f'L_{n-1}(x)', linewidth=1.8)
+ax.set_xlabel('x', fontsize=12)
+ax.set_ylabel('f(x)', fontsize=12)
+ax.set_title('Polinomios de Lagrange - f(x) = 125x² + 1', fontsize=14)
+ax.grid(True, alpha=0.3)
+ax.legend(fontsize=10)
+ax.set_ylim(-5, 300)
+
+plt.tight_layout()
+plt.show()
+
+# Figura 2: Taylor y Lagrange para función 2
+fig2, axes2 = plt.subplots(1, 2, figsize=(15, 6))
+
+# Taylor
+ax = axes2[0]
+ax.plot(x2, y2_real, 'k-', label='f(x) = arctan(x)', linewidth=2.5)
+colores = ['r', 'g', 'b', 'm']
+for i, (n, y) in enumerate(y2_taylor.items()):
+    ax.plot(x2, y, f'{colores[i]}--', label=f'P_{n}(x)', linewidth=1.8)
+ax.set_xlabel('x', fontsize=12)
+ax.set_ylabel('f(x)', fontsize=12)
+ax.set_title('Serie de Taylor - arctan(x) en x₀ = 1', fontsize=14)
+ax.grid(True, alpha=0.3)
+ax.legend(fontsize=10)
+ax.set_ylim(-2.5, 2.5)
+
+# Lagrange
+ax = axes2[1]
+ax.plot(x2, y2_real, 'k-', label='f(x) = arctan(x)', linewidth=2.5)
+colores = ['r', 'g', 'b', 'm']
+for i, (n, y) in enumerate(y2_lagrange.items()):
+    ax.plot(x2, y, f'{colores[i]}--', label=f'L_{n-1}(x)', linewidth=1.8)
+ax.set_xlabel('x', fontsize=12)
+ax.set_ylabel('f(x)', fontsize=12)
+ax.set_title('Polinomios de Lagrange - arctan(x)', fontsize=14)
+ax.grid(True, alpha=0.3)
+ax.legend(fontsize=10)
+ax.set_ylim(-2.5, 2.5)
+
+plt.tight_layout()
+plt.show()
+
+# Figura 3: Errores
+fig3, axes3 = plt.subplots(2, 2, figsize=(15, 12))
+
+# Error Taylor 1
+ax = axes3[0, 0]
+for n, y in y1_taylor.items():
+    error = np.abs(y1_real - y)
+    ax.plot(x1, error, label=f'P_{n}(x)')
+ax.set_xlabel('x')
+ax.set_ylabel('Error')
+ax.set_title('Error de Taylor - 125x² + 1')
+ax.grid(True, alpha=0.3)
+ax.legend()
+ax.set_ylim(0, 10)
+
+# Error Lagrange 1
+ax = axes3[0, 1]
+for n, y in y1_lagrange.items():
+    error = np.abs(y1_real - y)
+    ax.plot(x1, error, label=f'L_{n-1}(x)')
+ax.set_xlabel('x')
+ax.set_ylabel('Error')
+ax.set_title('Error de Lagrange - 125x² + 1')
+ax.grid(True, alpha=0.3)
+ax.legend()
+ax.set_ylim(0, 10)
+
+# Error Taylor 2
+ax = axes3[1, 0]
+for n, y in y2_taylor.items():
+    error = np.abs(y2_real - y)
+    ax.plot(x2, error, label=f'P_{n}(x)')
+ax.set_xlabel('x')
+ax.set_ylabel('Error')
+ax.set_title('Error de Taylor - arctan(x)')
+ax.grid(True, alpha=0.3)
+ax.legend()
+ax.set_ylim(0, 0.5)
+
+# Error Lagrange 2
+ax = axes3[1, 1]
+for n, y in y2_lagrange.items():
+    error = np.abs(y2_real - y)
+    ax.plot(x2, error, label=f'L_{n-1}(x)')
+ax.set_xlabel('x')
+ax.set_ylabel('Error')
+ax.set_title('Error de Lagrange - arctan(x)')
+ax.grid(True, alpha=0.3)
+ax.legend()
+ax.set_ylim(0, 0.5)
+
+plt.tight_layout()
+plt.show()
+
+# ============================================================================
+# RESUMEN FINAL
+# ============================================================================
+
+print("\n" + "=" * 80)
+print("RESUMEN FINAL")
+print("=" * 80)
+
+print("\nEJERCICIO 1: f(x) = 125x² + 1")
+print("-" * 50)
+print("✓ Orden de mejor aproximación (Taylor): 2")
+print("✓ Orden de mejor aproximación (Lagrange): 2 (3 puntos)")
+print("✓ Los polinomios de orden ≥ 2 son exactos")
+
+print("\nEJERCICIO 2: f(x) = arctan(x)")
+print("-" * 50)
+print("✓ Orden de mejor aproximación (Taylor): 7")
+print("✓ Orden de mejor aproximación (Lagrange): 6 (7 puntos)")
+print("✓ Mayor orden → mejor aproximación en el intervalo")
+
+print("\n" + "=" * 80)
+print("FIN DEL ANÁLISIS")
+print("=" * 80)
