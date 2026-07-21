@@ -1,111 +1,155 @@
 # ============================================================
-# EXAMEN 02 - MÉTODOS NUMÉRICOS
-# Bisección + Newton
+# EXAMEN 02 - MÉTODOS NUMÉRICOS (VERSIÓN MEJORADA)
+# Bisección + Newton + búsqueda robusta de raíces
 # Polinomio:
 # x^5 + 5.25x^4 + 4.125x^3 - 9.125x^2 - 14.625x - 5.625 = 0
 # ============================================================
 
 import numpy as np
-from scipy.optimize import bisect, newton
+from scipy.optimize import bisect, newton, root_scalar
 
 # ------------------------------------------------------------
-# Función
+# Función y derivada
 # ------------------------------------------------------------
 
 def f(x):
     return x**5 + 5.25*x**4 + 4.125*x**3 - 9.125*x**2 - 14.625*x - 5.625
 
-# Derivada (para Newton)
 def df(x):
     return 5*x**4 + 21*x**3 + 12.375*x**2 - 18.25*x - 14.625
 
 # ------------------------------------------------------------
-# Buscar intervalos donde cambia de signo
+# 1. Búsqueda de intervalos que contienen raíces
 # ------------------------------------------------------------
 
-intervalos = []
+def encontrar_intervalos(xmin, xmax, paso, tol=1e-12):
+    
+    x = np.arange(xmin, xmax + paso, paso)
+    y = f(x)
+    
+    intervalos = []
+    # Detectar cambios de signo
+    for i in range(len(x)-1):
+        a, b = x[i], x[i+1]
+        fa, fb = y[i], y[i+1]
+        
+        # Si f(a) es exactamente cero (o muy cercano)
+        if abs(fa) < tol:
+            intervalos.append((a, a))
+        # Si hay cambio de signo
+        if fa * fb < 0:
+            intervalos.append((a, b))
+        # Si no hay cambio de signo pero ambos valores son pequeños,
+        # puede ser un mínimo que indica raíz múltiple.
+        elif abs(fa) < 1e-3 and abs(fb) < 1e-3:
+            # Buscar mínimo de |f| en el intervalo usando búsqueda fina
+            x_fino = np.linspace(a, b, 20)
+            y_fino = np.abs(f(x_fino))
+            idx_min = np.argmin(y_fino)
+            if y_fino[idx_min] < tol:
+                intervalos.append((a, b))
+    
+    # Eliminar intervalos duplicados o muy cercanos
+    intervalos_unicos = []
+    for iv in intervalos:
+        if not any(abs(iv[0] - u[0]) < paso/2 and abs(iv[1] - u[1]) < paso/2 for u in intervalos_unicos):
+            intervalos_unicos.append(iv)
+    
+    return intervalos_unicos
 
-xmin = -20
-xmax = 20
-paso = 0.25
 
-x = xmin
-
-while x < xmax:
-
-    if f(x) == 0:
-        intervalos.append((x, x))
-
-    elif f(x)*f(x+paso) < 0:
-        intervalos.append((x, x+paso))
-
-    x += paso
-
-print("Intervalos encontrados:")
-for I in intervalos:
-    print(I)
+def refinar_raiz(a, b, tol=1e-12):
+    
+    fa, fb = f(a), f(b)
+    
+    # Caso 1: raíz exacta en uno de los extremos
+    if abs(fa) < tol:
+        return a, abs(fa)
+    if abs(fb) < tol:
+        return b, abs(fb)
+    
+    # Caso 2: cambio de signo -> bisección
+    if fa * fb < 0:
+        try:
+            r = bisect(f, a, b, xtol=tol, rtol=tol, maxiter=200)
+            return r, abs(f(r))
+        except:
+            pass
+    
+    try:
+        # Punto inicial: el punto donde |f| es mínimo en el intervalo
+        x_fino = np.linspace(a, b, 100)
+        idx = np.argmin(np.abs(f(x_fino)))
+        x0 = x_fino[idx]
+        r = newton(f, x0, fprime=df, tol=tol, maxiter=100)
+        if a <= r <= b:
+            return r, abs(f(r))
+    except:
+        pass
+    
+    try:
+        sol = root_scalar(f, method='ridder', bracket=[a,b], xtol=tol, rtol=tol)
+        if sol.converged:
+            r = sol.root
+            return r, abs(f(r))
+    except:
+        pass
+    
+    return None
 
 # ------------------------------------------------------------
-# Método de Bisección
+# 3. Programa principal
 # ------------------------------------------------------------
 
-raices_bisect = []
+# Parámetros de búsqueda
+xmin, xmax = -20, 20
+paso = 0.05   # más fino que antes (0.25)
 
+# Encontrar intervalos candidatos
+intervalos = encontrar_intervalos(xmin, xmax, paso, tol=1e-12)
+
+print("Intervalos candidatos encontrados:")
 for a,b in intervalos:
+    print(f"[{a:.4f}, {b:.4f}]")
 
-    try:
+raices = []
+residuos = []
 
-        r = bisect(
-            f,
-            a,
-            b,
-            xtol=1e-12,
-            rtol=1e-12,
-            maxiter=200
-        )
+for a, b in intervalos:
+    resultado = refinar_raiz(a, b)
+    if resultado is not None:
+        r, res = resultado
+        # Verificar que el residuo sea pequeño
+        if res < 1e-10:
+            # Evitar duplicados
+            if not any(abs(r - r2) < 1e-8 for r2 in raices):
+                raices.append(r)
+                residuos.append(res)
 
-        if not any(abs(r-r2) < 1e-8 for r2 in raices_bisect):
-            raices_bisect.append(r)
-
-    except:
-        pass
-
-print("\nRaíces por Bisección")
-
-for r in raices_bisect:
-    print(r)
-
-# ------------------------------------------------------------
-# Método de Newton
-# ------------------------------------------------------------
-
-raices_newton = []
-
-for r in raices_bisect:
-
-    try:
-
-        rn = newton(
-            func=f,
-            x0=r,
-            fprime=df,
-            tol=1e-12,
-            maxiter=100
-        )
-
-        if not any(abs(rn-r2) < 1e-10 for r2 in raices_newton):
-            raices_newton.append(rn)
-
-    except:
-        pass
-
-# ------------------------------------------------------------
 # Ordenar raíces
+if raices:
+    orden = np.argsort(raices)
+    raices = [raices[i] for i in orden]
+    residuos = [residuos[i] for i in orden]
+else:
+    print("No se encontraron raíces reales.")
+
+# ------------------------------------------------------------
+# 4. Mostrar resultados
 # ------------------------------------------------------------
 
-raices_newton.sort()
+print("\n=== RAÍCES FINALES ===")
+print(f"{'N°':>4} {'Raíz':>20} {'f(raíz)':>20}")
+print("-" * 50)
+for i, (r, res) in enumerate(zip(raices, residuos), 1):
+    print(f"{i:4d} {r:20.12f} {res:20.12e}")
 
-print("\nRaíces finales")
-
-for i,r in enumerate(raices_newton):
-    print(f"x{i+1} = {r:.12f}")
+# También podemos comparar con numpy.roots (opcional)
+print("\n=== COMPROBACIÓN CON NUMPY.ROOTS ===")
+coef = [1, 5.25, 4.125, -9.125, -14.625, -5.625]
+raices_complejas = np.roots(coef)
+raices_reales = [r.real for r in raices_complejas if abs(r.imag) < 1e-12]
+raices_reales.sort()
+print("Raíces reales (numpy):")
+for r in raices_reales:
+    print(f"{r:.12f}")
