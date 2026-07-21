@@ -1,0 +1,111 @@
+# ============================================================
+# EXAMEN 02 - MÉTODOS NUMÉRICOS
+# Bisección + Newton
+# Polinomio:
+# x^5 + 5.25x^4 + 4.125x^3 - 9.125x^2 - 14.625x - 5.625 = 0
+# ============================================================
+
+import numpy as np
+from scipy.optimize import bisect, newton
+
+# ------------------------------------------------------------
+# Función
+# ------------------------------------------------------------
+
+def f(x):
+    return x**5 + 5.25*x**4 + 4.125*x**3 - 9.125*x**2 - 14.625*x - 5.625
+
+# Derivada (para Newton)
+def df(x):
+    return 5*x**4 + 21*x**3 + 12.375*x**2 - 18.25*x - 14.625
+
+# ------------------------------------------------------------
+# Buscar intervalos donde cambia de signo
+# ------------------------------------------------------------
+
+intervalos = []
+
+xmin = -20
+xmax = 20
+paso = 0.25
+
+x = xmin
+
+while x < xmax:
+
+    if f(x) == 0:
+        intervalos.append((x, x))
+
+    elif f(x)*f(x+paso) < 0:
+        intervalos.append((x, x+paso))
+
+    x += paso
+
+print("Intervalos encontrados:")
+for I in intervalos:
+    print(I)
+
+# ------------------------------------------------------------
+# Método de Bisección
+# ------------------------------------------------------------
+
+raices_bisect = []
+
+for a,b in intervalos:
+
+    try:
+
+        r = bisect(
+            f,
+            a,
+            b,
+            xtol=1e-12,
+            rtol=1e-12,
+            maxiter=200
+        )
+
+        if not any(abs(r-r2) < 1e-8 for r2 in raices_bisect):
+            raices_bisect.append(r)
+
+    except:
+        pass
+
+print("\nRaíces por Bisección")
+
+for r in raices_bisect:
+    print(r)
+
+# ------------------------------------------------------------
+# Método de Newton
+# ------------------------------------------------------------
+
+raices_newton = []
+
+for r in raices_bisect:
+
+    try:
+
+        rn = newton(
+            func=f,
+            x0=r,
+            fprime=df,
+            tol=1e-12,
+            maxiter=100
+        )
+
+        if not any(abs(rn-r2) < 1e-10 for r2 in raices_newton):
+            raices_newton.append(rn)
+
+    except:
+        pass
+
+# ------------------------------------------------------------
+# Ordenar raíces
+# ------------------------------------------------------------
+
+raices_newton.sort()
+
+print("\nRaíces finales")
+
+for i,r in enumerate(raices_newton):
+    print(f"x{i+1} = {r:.12f}")
